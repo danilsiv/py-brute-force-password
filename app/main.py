@@ -1,3 +1,4 @@
+import multiprocessing
 import time
 from hashlib import sha256
 
@@ -20,8 +21,46 @@ def sha256_hash_str(to_hash: str) -> str:
     return sha256(to_hash.encode("utf-8")).hexdigest()
 
 
+def worker(
+        start: int, end: int, shared_list: list, lock: bool, stop_flag
+) -> None:
+    for i in range(start, end):
+        if stop_flag.value:
+            return
+
+        if sha256_hash_str(f"{i:08}") in PASSWORDS_TO_BRUTE_FORCE:
+            with lock:
+                print(f"Process {multiprocessing.current_process().name} found {i:08}")
+                shared_list.append(f"{i:08}")
+                if len(shared_list) >= 10:
+                    stop_flag.value = True
+                    return
+
+
 def brute_force_password() -> None:
-    pass
+    manager = multiprocessing.Manager()
+    shared_list = manager.list()
+    lock = manager.Lock()
+    stop_flag = manager.Value("b", False)
+
+    total_range = 99999999
+    num_processes = multiprocessing.cpu_count() - 1
+    print(f"Number of processes: {num_processes}")
+    chunk_size = total_range // num_processes
+    print(f"Number of iterations for each process: {chunk_size}")
+
+    processes = []
+    for i in range(num_processes):
+        start = i * chunk_size + 1
+        end = (i + 1) * chunk_size + 1
+        process = multiprocessing.Process(
+            target=worker, args=(start, end, shared_list, lock, stop_flag)
+        )
+        process.start()
+        processes.append(process)
+
+    for process in processes:
+        process.join()
 
 
 if __name__ == "__main__":
