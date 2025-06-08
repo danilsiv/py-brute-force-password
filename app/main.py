@@ -41,8 +41,8 @@ def brute_force_password() -> None:
 
     with ProcessPoolExecutor(num_processes) as executor:
         for i in range(num_processes):
-            start = i * chunk_size + 1
-            end = (i + 1) * chunk_size + 1
+            start = i * chunk_size
+            end = (i + 1) * chunk_size if i < num_processes - 1 else total_range
             processes.append((executor.submit(worker, start, end)))
 
     wait(processes)
