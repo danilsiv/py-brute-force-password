@@ -33,13 +33,13 @@ def worker(start: int, end: int) -> list:
 
 
 def brute_force_password() -> None:
-    total_range = 99999999
-    num_processes = multiprocessing.cpu_count() - 1
+    total_range = 100000000
+    num_processes = multiprocessing.cpu_count()
     chunk_size = total_range // num_processes
 
     processes = []
 
-    with ProcessPoolExecutor(multiprocessing.cpu_count()) as executor:
+    with ProcessPoolExecutor(num_processes) as executor:
         for i in range(num_processes):
             start = i * chunk_size + 1
             end = (i + 1) * chunk_size + 1
